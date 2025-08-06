@@ -2,9 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseTripDetails } from '@/lib/nlpParser';
 import { getLiveLocation } from '@/lib/location'; // Optional: implement with reverse geocoding if needed
+import type { TripPlanData } from "../../types";
 
 export type TripContext = {
-  lastPlannedTrip: import("/Users/surajrawat/Downloads/Tripy/app/api/trip/route").TripPlanData;
+lastPlannedTrip: TripPlanData;
   from?: string;
   to?: string;
   date?: string;
