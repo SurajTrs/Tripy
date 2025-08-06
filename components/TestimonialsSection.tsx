@@ -87,9 +87,10 @@ export default function TestimonialsSection() {
                 ))}
               </div>
               
-              <p className="text-gray-700 leading-relaxed mb-4">
-                "{testimonial.content}"
-              </p>
+        <p className="text-gray-700 leading-relaxed mb-4">
+  &quot;{testimonial.content}&quot;
+</p>
+
               
               <div className="flex items-center text-sm text-gray-500">
                 <i className="ri-check-double-line text-green-500 mr-2"></i>

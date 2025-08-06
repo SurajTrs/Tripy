@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Globesec from './Globesec';
 
 interface HeroSectionProps {
   onActivateAssistant: () => void;
@@ -19,7 +20,7 @@ export default function HeroSection({ onActivateAssistant, isListening }: HeroSe
       <div
         className=" absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url('/assets/bg.png')`,
+          backgroundImage: `url('/assets/b4.png')`,
           
            backgroundPosition: 'center -45%',
            backgroundRepeat: 'no-repeat',
@@ -90,25 +91,10 @@ export default function HeroSection({ onActivateAssistant, isListening }: HeroSe
           <div className="flex justify-center items-center">
             <div className="relative">
               {/* Main Orb */}
-              <div
-                className={`w-80 h-80 rounded-full bg-gradient-to-br from-violet-400 to-purple-600 shadow-[0_0_60px_rgba(124,58,237,0.3)] flex items-center justify-center relative ${
-                  isListening ? 'animate-pulse' : ''
-                }`}
-              >
-                <div className="w-64 h-64 rounded-full bg-gradient-to-br from-violet-300 to-purple-500 flex items-center justify-center">
-                  <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-                    <i className="ri-robot-line text-4xl text-white"></i>
-                  </div>
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-transparent">
+      <Globesec />
+    </div>
 
-                {/* Orbit Effects */}
-                <div className="absolute inset-0 animate-spin-slow">
-                  <div className="absolute top-3 left-1/2 -translate-x-1/2 w-3 h-3 bg-white/60 rounded-full" />
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 w-2 h-2 bg-white/40 rounded-full" />
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-white/50 rounded-full" />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 bg-white/70 rounded-full" />
-                </div>
-              </div>
 
               {/* Floating Icons */}
               {[

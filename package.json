@@ -15,7 +15,9 @@
     "next": "15.1.0",
     "openai": "^5.10.2",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-globe.gl": "^2.35.0",
+    "three": "^0.178.0"
   },
   "devDependencies": {
     "@types/dom-speech-recognition": "^0.0.6",
