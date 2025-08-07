@@ -3,7 +3,6 @@
 
 import React, { useRef, useEffect } from 'react';
 import Globe from 'react-globe.gl';
-import * as THREE from 'three';
 
 const GlobeComponent = () => {
   const globeRef = useRef<any>(null);
