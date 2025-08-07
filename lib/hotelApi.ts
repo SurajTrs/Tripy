@@ -2,6 +2,8 @@
 // This file integrates with the Hotels.com Provider API on RapidAPI for hotel search.
 
 import { HotelData } from '../types'; // Import the consistent HotelData interface
+import dotenv from 'dotenv';
+dotenv.config();
 
 export interface HotelSearchOptions {
   destination: string; // City name like "Prague"
@@ -86,7 +88,6 @@ export async function searchHotels(options: HotelSearchOptions): Promise<HotelDa
     return [];
   }
 
-  const rapidApiKey = process.env.RAPIDAPI_KEY;
   const hotelApiHost = process.env.HOTEL_API_HOST; // e.g., 'hotels-com-provider.p.rapidapi.com'
 
   // Ensure checkInDate and checkOutDate are valid and provided
@@ -100,13 +101,14 @@ export async function searchHotels(options: HotelSearchOptions): Promise<HotelDa
   const url = `https://${hotelApiHost}/v2/hotels/search?region_id=${regionId}&checkin_date=${options.checkInDate}&checkout_date=${options.checkOutDate}&adults_number=${options.adults || 1}&domain=IN&locale=en_IN&sort_order=PRICE`;
 
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "x-rapidapi-host": hotelApiHost,
-        "x-rapidapi-key": rapidApiKey,
-      },
-    });
+   const response = await fetch(url, {
+  method: "GET",
+  headers: {
+    "x-rapidapi-host": process.env.RAPID_API_HOST || "",
+    "x-rapidapi-key": process.env.RAPID_API_KEY || "",
+  },
+});
+
 
     if (!response.ok) {
       const errorBody = await response.text();
