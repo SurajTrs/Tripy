@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function BookingCancelPage() {
+function BookingCancelContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
@@ -43,5 +43,13 @@ export default function BookingCancelPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BookingCancelPage() {
+  return (
+    <Suspense>
+      <BookingCancelContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -23,7 +23,7 @@ interface BookingDetails {
   };
 }
 
-export default function BookingSuccessPage() {
+function BookingSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
@@ -181,5 +181,12 @@ export default function BookingSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+export default function BookingSuccessPage() {
+  return (
+    <Suspense>
+      <BookingSuccessContent />
+    </Suspense>
   );
 }
