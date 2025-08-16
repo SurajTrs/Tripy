@@ -5,6 +5,7 @@ interface Flight {
   departureTime: string;
   arrivalTime: string;
   price: string;
+  isReturn?: boolean;
 }
 
 interface Hotel {
@@ -21,15 +22,17 @@ interface Uber {
 
 interface TripSummaryProps {
   destination: string;
+  origin?: string;
   flights: Flight[];
   hotels: Hotel[];
   ubers: Uber[];
+  returnTrip?: boolean;
 }
 
-const TripSummary: React.FC<TripSummaryProps> = ({ destination, flights, hotels, ubers }) => {
+const TripSummary: React.FC<TripSummaryProps> = ({ destination, origin, flights, hotels, ubers, returnTrip = false }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md max-w-5xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4 text-center">Trip Summary for {destination}</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">Trip Summary for {origin && returnTrip ? `${origin} ↔ ${destination}` : destination}</h2>
 
       {/* Flights */}
       <div className="mb-6">
@@ -37,6 +40,7 @@ const TripSummary: React.FC<TripSummaryProps> = ({ destination, flights, hotels,
         <ul className="space-y-2">
           {flights.map((flight, index) => (
             <li key={index} className="border p-4 rounded-md bg-gray-50">
+              {flight.isReturn && <div className="bg-violet-100 text-violet-800 px-2 py-1 rounded text-xs font-semibold mb-2 inline-block">Return Flight</div>}
               <p><strong>Airline:</strong> {flight.airline}</p>
               <p><strong>Departure:</strong> {flight.departureTime}</p>
               <p><strong>Arrival:</strong> {flight.arrivalTime}</p>

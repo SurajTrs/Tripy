@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { TripPlanData, TripContext, FlightData, HotelData } from '../types';
+import { TripPlanData, TripContext, FlightData, HotelData, TrainData, BusData } from '../types';
 import { HotelCard } from './tripResults/HotelCard';
 import { FlightCard } from './tripResults/FlightCard';
 
@@ -45,6 +45,8 @@ function getPlaceholderForAsk(askKey: keyof TripContext): string {
     case 'budget':    return 'e.g., luxury or budget';
     case 'groupSize': return 'e.g., 2 people';
     case 'mode':      return 'e.g., flight or train';
+    case 'returnTrip': return 'e.g., yes or no';
+    case 'returnDate': return 'e.g., next week, 30th December';
     default:          return 'your answer';
   }
 }
@@ -59,9 +61,11 @@ export default function VoiceAssistant({
   const [tripContext, setTripContext] = useState<TripContext>({});
   const [fallbackInput, setFallbackInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [rightPanelData, setRightPanelData] = useState<Partial<TripPlanData> | null>(null);
+  const [returnTripData, setReturnTripData] = useState<Partial<TripPlanData> | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -80,20 +84,47 @@ export default function VoiceAssistant({
     setMessages((prev) => [...prev, msg]);
   };
 
-  const handleOptionSelect = (optionType: 'flight' | 'hotel', selection: FlightData | HotelData) => {
-    const selectionName = 'airline' in selection ? selection.airline : selection.name;
+  const handleOptionSelect = (optionType: 'flight' | 'train' | 'bus' | 'hotel', selection: FlightData | TrainData | BusData | HotelData) => {
+    let selectionName = '';
+    
+    if ('airline' in selection) {
+      selectionName = selection.airline; // Flight
+    } else if ('trainName' in selection) {
+      selectionName = selection.trainName; // Train
+    } else if ('operator' in selection) {
+      selectionName = selection.operator; // Bus
+    } else {
+      selectionName = selection.name; // Hotel
+    }
+    
     addMessage({
       type: 'user',
       content: `I've selected the ${optionType}: ${selectionName}.`,
       timestamp: new Date(),
     });
 
+    // Check if this is a return trip selection
+    const isReturnSelection = tripContext.returnTrip && 
+      ((tripContext.flight && !tripContext.returnFlight && optionType === 'flight') ||
+       (tripContext.train && !tripContext.returnTrain && optionType === 'train') ||
+       (tripContext.bus && !tripContext.returnBus && optionType === 'bus'));
+    
     const updatedContext: TripContext = {
       ...tripContext,
-      [optionType]: selection,
     };
+    
+    if (isReturnSelection) {
+      // This is a return selection
+      const key = `return${optionType.charAt(0).toUpperCase() + optionType.slice(1)}` as 'returnFlight' | 'returnTrain' | 'returnBus';
+      updatedContext[key] = selection as any;
+    } else {
+      // This is a regular selection
+      const key = optionType as 'flight' | 'train' | 'bus' | 'hotel';
+      updatedContext[key] = selection as any;
+    }
+    
     setTripContext(updatedContext);
-    sendCommand(`User selected ${optionType}`, updatedContext);
+    sendCommand(`User selected ${isReturnSelection ? 'return ' : ''}${optionType}`, updatedContext);
   };
 
   const sendCommand = async (command: string, customContext?: TripContext) => {
@@ -134,6 +165,14 @@ export default function VoiceAssistant({
       
       if (result.context) {
         setTripContext(result.context);
+        // If this was a booking request and it was successful, update booking status
+        if (result.context.bookingReference) {
+          addMessage({ 
+            type: 'assistant', 
+            content: `✅ Booking confirmed! Reference: ${result.context.bookingReference}`, 
+            timestamp: new Date() 
+          });
+        }
       }
       
       if (result.data) {
@@ -172,6 +211,155 @@ export default function VoiceAssistant({
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') sendCommand(fallbackInput);
   };
+
+  const fetchRealTimePricing = async () => {
+    if (!rightPanelData || !tripContext.origin || !tripContext.destination || !tripContext.departureDate) {
+      return null;
+    }
+    
+    setIsBooking(true);
+    addMessage({
+      type: 'assistant',
+      content: '🔄 Fetching real-time pricing for your trip...',
+      timestamp: new Date()
+    });
+    
+    try {
+      const pricingRequest = {
+        transportType: tripContext.transportType || 'flight',
+        origin: tripContext.origin,
+        destination: tripContext.destination,
+        departureDate: tripContext.departureDate,
+        returnDate: tripContext.returnDate || undefined,
+        adults: tripContext.groupSize || 1,
+        hotelNeeded: !!tripContext.hotelNeeded,
+        cabToStationNeeded: !!tripContext.cabToStationNeeded,
+        cabToHotelNeeded: !!tripContext.cabToHotelNeeded
+      };
+      
+      const response = await fetch('/api/real-pricing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pricingRequest)
+      });
+      
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // Update the right panel data with real-time pricing
+        const updatedPlanData = {
+          ...rightPanelData,
+          transport: result.data.transport,
+          returnTransport: result.data.returnTransport,
+          hotel: result.data.hotel,
+          cabToStation: result.data.cabToStation,
+          cabToHotel: result.data.cabToHotel,
+          total: result.data.total
+        };
+        
+        setRightPanelData(updatedPlanData);
+        
+        addMessage({
+          type: 'assistant',
+          content: `✅ Real-time pricing updated!\n\nTotal Amount: ₹${result.data.total.toLocaleString()}`,
+          timestamp: new Date()
+        });
+        
+        return updatedPlanData;
+      } else {
+        addMessage({
+          type: 'assistant',
+          content: `⚠️ Couldn't fetch real-time pricing: ${result.message || 'Unknown error'}. Using estimated pricing instead.`,
+          timestamp: new Date()
+        });
+        return rightPanelData;
+      }
+    } catch (error: any) {
+      addMessage({
+        type: 'assistant',
+        content: `⚠️ Error fetching real-time pricing: ${error.message || 'Unknown error'}. Using estimated pricing instead.`,
+        timestamp: new Date()
+      });
+      return rightPanelData;
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
+  const handleBooking = async () => {
+    if (!rightPanelData || !isFinalPlan) return;
+    
+    setIsBooking(true);
+    try {
+      // First get real-time pricing
+      const updatedPlanData = await fetchRealTimePricing() || rightPanelData;
+      
+      // For demo purposes, we'll use mock user details
+      // In a real app, you'd collect this from a form
+      const bookingRequest = {
+        tripPlan: updatedPlanData,
+        userDetails: {
+          name: "Demo User",
+          email: "demo@example.com",
+          phone: "+91-9876543210",
+          passengers: [{
+            firstName: "Demo",
+            lastName: "User",
+            dateOfBirth: "1990-01-01",
+            passportNumber: "A12345678"
+          }]
+        },
+        context: tripContext // Pass the full trip context for reference
+      };
+
+      // Use the Stripe checkout API instead of direct booking
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookingRequest)
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.checkoutUrl) {
+        // Update trip context with session ID
+        setTripContext(prev => ({
+          ...prev,
+          stripeSessionId: result.sessionId
+        }));
+        
+        addMessage({
+          type: 'assistant',
+          content: `🛒 Your trip is ready for checkout! You'll be redirected to our secure payment page to complete your booking.\n\nTotal Amount: ₹${updatedPlanData.total?.toLocaleString() || 'Calculating...'}`,
+          timestamp: new Date()
+        });
+        
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance("You'll be redirected to our secure payment page to complete your booking.");
+          window.speechSynthesis.speak(utterance);
+        }
+        
+        // Redirect to Stripe checkout
+        window.location.href = result.checkoutUrl;
+      } else {
+        addMessage({
+          type: 'assistant',
+          content: `❌ Checkout failed: ${result.message || 'Unable to create checkout session'}`,
+          timestamp: new Date()
+        });
+      }
+    } catch (error: any) {
+      addMessage({
+        type: 'assistant',
+        content: `❌ Checkout error: ${error.message || 'Something went wrong during checkout.'}`,
+        timestamp: new Date()
+      });
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
 
   if (!isActive) return null;
   
@@ -217,16 +405,65 @@ export default function VoiceAssistant({
                 {isFinalPlan ? (
                   // Display Final Trip Plan (with safety checks)
                   <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200 text-sm space-y-2">
+                    {/* Origin and Destination */}
                     {rightPanelData.transport && 'departureAirportIata' in rightPanelData.transport && <p><strong>From:</strong> {rightPanelData.transport.departureAirportIata}</p>}
                     {rightPanelData.transport && 'arrivalAirportIata' in rightPanelData.transport && <p><strong>To:</strong> {rightPanelData.transport.arrivalAirportIata}</p>}
+                    {rightPanelData.transport && 'departureCity' in rightPanelData.transport && <p><strong>From:</strong> {rightPanelData.transport.departureCity}</p>}
+                    {rightPanelData.transport && 'arrivalCity' in rightPanelData.transport && <p><strong>To:</strong> {rightPanelData.transport.arrivalCity}</p>}
                     <hr/>
-                    {rightPanelData.transport && 'airline' in rightPanelData.transport && <p><strong>Flight:</strong> {rightPanelData.transport.airline} - ₹{rightPanelData.transport.price.toLocaleString()}</p>}
+                    
+                    {/* Transport Details */}
+                    {rightPanelData.transportType === 'flight' && rightPanelData.transport && 'airline' in rightPanelData.transport && (
+                      <p><strong>Flight:</strong> {rightPanelData.transport.airline} - ₹{rightPanelData.transport.price.toLocaleString()}</p>
+                    )}
+                    {rightPanelData.transportType === 'train' && rightPanelData.transport && 'trainName' in rightPanelData.transport && (
+                      <p><strong>Train:</strong> {rightPanelData.transport.trainName} ({rightPanelData.transport.trainNumber}) - ₹{rightPanelData.transport.price.toLocaleString()}</p>
+                    )}
+                    {rightPanelData.transportType === 'bus' && rightPanelData.transport && 'operator' in rightPanelData.transport && (
+                      <p><strong>Bus:</strong> {rightPanelData.transport.operator} - ₹{rightPanelData.transport.price.toLocaleString()}</p>
+                    )}
+                    
+                    {/* Return Transport Details */}
+                    {rightPanelData.returnTrip && rightPanelData.returnTransport && 'airline' in rightPanelData.returnTransport && (
+                      <p><strong>Return Flight:</strong> {rightPanelData.returnTransport.airline} - ₹{rightPanelData.returnTransport.price.toLocaleString()}</p>
+                    )}
+                    {rightPanelData.returnTrip && rightPanelData.returnTransport && 'trainName' in rightPanelData.returnTransport && (
+                      <p><strong>Return Train:</strong> {rightPanelData.returnTransport.trainName} ({rightPanelData.returnTransport.trainNumber}) - ₹{rightPanelData.returnTransport.price.toLocaleString()}</p>
+                    )}
+                    {rightPanelData.returnTrip && rightPanelData.returnTransport && 'operator' in rightPanelData.returnTransport && (
+                      <p><strong>Return Bus:</strong> {rightPanelData.returnTransport.operator} - ₹{rightPanelData.returnTransport.price.toLocaleString()}</p>
+                    )}
+                    
+                    {/* Hotel Details */}
                     {rightPanelData.hotel && <p><strong>Hotel:</strong> {rightPanelData.hotel.name} - ₹{rightPanelData.hotel.price.toLocaleString()}/night</p>}
                     <hr/>
-                    {rightPanelData.cabToStation && <p><strong>Cab to Airport:</strong> ₹{rightPanelData.cabToStation.price.toLocaleString()}</p>}
+                    
+                    {/* Transportation Details */}
+                    {rightPanelData.cabToStation && <p><strong>Cab to {rightPanelData.transportType === 'flight' ? 'Airport' : rightPanelData.transportType === 'train' ? 'Train Station' : 'Bus Station'}:</strong> ₹{rightPanelData.cabToStation.price.toLocaleString()}</p>}
                     {rightPanelData.cabToHotel && <p><strong>Cab to Hotel:</strong> ₹{rightPanelData.cabToHotel.price.toLocaleString()}</p>}
                     <hr/>
+                    
+                    {/* Total Cost */}
                     {rightPanelData.total != null && <p className="text-base font-bold mt-2">Total Est. Cost: ₹{rightPanelData.total.toLocaleString()}</p>}
+                    
+                    {/* Booking Button */}
+                    <button 
+                      onClick={handleBooking}
+                      disabled={isBooking}
+                      className="w-full mt-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                      {isBooking ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Booking...
+                        </>
+                      ) : (
+                        <>
+                          <i className="ri-check-line"></i>
+                          Book This Trip
+                        </>
+                      )}
+                    </button>
                   </div>
                 ) : (
                   // Display Intermediate Options
@@ -242,13 +479,77 @@ export default function VoiceAssistant({
                     )}
                    {rightPanelData.availableFlights && (
   <div>
-    <h4 className="font-semibold text-gray-700 mb-2">Choose a Flight</h4>
+    <h4 className="font-semibold text-gray-700 mb-2">Choose a {tripContext.returnTrip && tripContext.flight ? 'Return ' : ''}Flight</h4>
     {rightPanelData.availableFlights.map((flight) => (
       <FlightCard
         key={flight.id}
         flight={flight}
         onSelect={() => handleOptionSelect('flight', flight)}
       />
+    ))}
+  </div>
+)}
+
+{rightPanelData.availableTrains && (
+  <div>
+    <h4 className="font-semibold text-gray-700 mb-2">Choose a {tripContext.returnTrip && tripContext.train ? 'Return ' : ''}Train</h4>
+    {rightPanelData.availableTrains.map((train) => (
+      <div key={train.id} className="bg-white p-3 rounded-lg border border-gray-200 mb-3 hover:shadow-md transition-shadow">
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="font-bold">{train.trainName} ({train.trainNumber})</p>
+            <p className="text-sm text-gray-600">{train.trainType} - {train.trainClass}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-sm">{train.departureTime}</span>
+              <span className="text-xs text-gray-500">→</span>
+              <span className="text-sm">{train.arrivalTime}</span>
+              <span className="text-xs text-gray-500 ml-2">{train.duration}</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="font-bold text-violet-700">₹{train.price.toLocaleString()}</p>
+            <p className="text-xs text-gray-500">{train.availableSeats} seats left</p>
+            <button 
+              onClick={() => handleOptionSelect('train', train)}
+              className="mt-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold py-1 px-3 rounded transition-colors"
+            >
+              Select
+            </button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
+{rightPanelData.availableBuses && (
+  <div>
+    <h4 className="font-semibold text-gray-700 mb-2">Choose a {tripContext.returnTrip && tripContext.bus ? 'Return ' : ''}Bus</h4>
+    {rightPanelData.availableBuses.map((bus) => (
+      <div key={bus.id} className="bg-white p-3 rounded-lg border border-gray-200 mb-3 hover:shadow-md transition-shadow">
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="font-bold">{bus.operator}</p>
+            <p className="text-sm text-gray-600">{bus.busType}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-sm">{bus.departureTime}</span>
+              <span className="text-xs text-gray-500">→</span>
+              <span className="text-sm">{bus.arrivalTime}</span>
+              <span className="text-xs text-gray-500 ml-2">{bus.duration}</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="font-bold text-violet-700">₹{bus.price.toLocaleString()}</p>
+            <p className="text-xs text-gray-500">{bus.availableSeats} seats left</p>
+            <button 
+              onClick={() => handleOptionSelect('bus', bus)}
+              className="mt-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold py-1 px-3 rounded transition-colors"
+            >
+              Select
+            </button>
+          </div>
+        </div>
+      </div>
     ))}
   </div>
 )}

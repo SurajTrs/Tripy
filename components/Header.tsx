@@ -1,12 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/authStore';
+
+// User interface is now imported from authStore
 
 export default function Header() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // Replace with real auth logic
+  const { user, isLoading, isAuthenticated, logout, checkAuth } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+
+
+  const handleLogout = async () => {
+    await logout();
+    setDropdownOpen(false);
+    setMenuOpen(false);
+    router.push('/');
+  };
 
   return (
     <header className="fixed top-0 w-full z-50 bg-gradient-to-r from-violet-900/80 via-purple-900/80 to-indigo-900/80 backdrop-blur-lg shadow-md">
@@ -30,7 +48,7 @@ export default function Header() {
 
         {/* Auth/Profile (Desktop) */}
         <div className="hidden md:flex items-center gap-4 relative">
-          {isAuthenticated ? (
+          {!isLoading && isAuthenticated && user ? (
             <div
               className="relative"
               onMouseEnter={() => setDropdownOpen(true)}
@@ -41,17 +59,14 @@ export default function Header() {
                 aria-haspopup="true"
               >
                 <i className="ri-user-3-line text-xl" aria-hidden="true"></i>
-                <span>My Account</span>
+                <span>{user.firstName}</span>
               </button>
 
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 bg-white text-sm text-gray-800 rounded shadow-lg p-2 w-40 z-10">
                   <Link href="/dashboard" className="block px-3 py-2 hover:bg-gray-100 rounded">Dashboard</Link>
                   <button
-                    onClick={() => {
-                      setIsAuthenticated(false);
-                      setDropdownOpen(false);
-                    }}
+                    onClick={handleLogout}
                     className="w-full text-left px-3 py-2 hover:bg-gray-100 rounded"
                   >
                     Logout
@@ -94,14 +109,11 @@ export default function Header() {
           <Link href="#how-it-works" className="block">How It Works</Link>
           <Link href="#contact" className="block">Contact</Link>
           <hr className="border-white/20" />
-          {isAuthenticated ? (
+          {!isLoading && user ? (
             <>
               <Link href="/dashboard" className="block">Dashboard</Link>
               <button
-                onClick={() => {
-                  setIsAuthenticated(false);
-                  setMenuOpen(false);
-                }}
+                onClick={handleLogout}
                 className="block w-full text-left"
               >
                 Logout

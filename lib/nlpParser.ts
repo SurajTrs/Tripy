@@ -16,7 +16,8 @@ export async function parseTripDetails(message: string): Promise<ParsedTripDetai
     return {
       intent: 'error',
       message: 'API key for NLP is missing. Please configure it.', // Message is a string
-      from: null, to: null, date: null, budget: null, mode: null, groupSize: null
+      from: null, to: null, date: null, budget: null, mode: null, groupSize: null,
+      returnTrip: null, returnDate: null
     };
   }
 
@@ -31,7 +32,9 @@ export async function parseTripDetails(message: string): Promise<ParsedTripDetai
 - budget: One of Luxury, Medium, Budget-friendly
 - mode: One of Train, Bus, Flight
 - groupSize: Number of people (e.g., 1, 2, 5)
-- intent: 'book_trip' if the user wants to plan or book a trip, 'display_trip' if they want to see a previous trip, 'cancel_trip' if they want to clear the current plan, 'greet' for greetings (e.g., "hi", "hello").
+- returnTrip: Boolean (true if the user wants a round trip or return journey, false or null if one-way)
+- returnDate: Date of return travel (e.g., "30th December", "next week", "August 25 2025")
+- intent: 'book_trip' if the user wants to plan or book a trip (including phrases like "book my ticket", "book it", "confirm booking", "book now", "make a booking", "reserve", "purchase ticket", "buy ticket", "proceed with booking", "complete booking", "finalize booking", "book this trip", "book the flight", "book the hotel"), 'display_trip' if they want to see a previous trip, 'cancel_trip' if they want to clear the current plan, 'greet' for greetings (e.g., "hi", "hello").
 - message: An optional, brief confirmation or error message (e.g., "Understood!", "Please clarify the date.").
 
 Return only JSON as per this schema with no markdown or extra text. If a field is not found, set its value to null.`;
@@ -62,6 +65,8 @@ Return only JSON as per this schema with no markdown or extra text. If a field i
             nullable: true,
           },
           groupSize: { type: "NUMBER", nullable: true },
+          returnTrip: { type: "BOOLEAN", nullable: true },
+          returnDate: { type: "STRING", nullable: true },
           intent: {
             type: "STRING",
             enum: ["book_trip", "display_trip", "cancel_trip", "greet", "error", "unknown"] // Ensure all intents are covered
@@ -87,7 +92,8 @@ Return only JSON as per this schema with no markdown or extra text. If a field i
       return {
         intent: 'error',
         message: `NLP service error: ${res.statusText}. Details: ${errText.substring(0, 150)}`,
-        from: null, to: null, date: null, budget: null, mode: null, groupSize: null
+        from: null, to: null, date: null, budget: null, mode: null, groupSize: null,
+        returnTrip: null, returnDate: null
       };
     }
 
@@ -99,7 +105,8 @@ Return only JSON as per this schema with no markdown or extra text. If a field i
         return {
           intent: 'error',
           message: 'NLP service returned an invalid response format.',
-          from: null, to: null, date: null, budget: null, mode: null, groupSize: null
+          from: null, to: null, date: null, budget: null, mode: null, groupSize: null,
+          returnTrip: null, returnDate: null
         };
     }
 
@@ -113,7 +120,8 @@ Return only JSON as per this schema with no markdown or extra text. If a field i
         return {
           intent: 'unknown',
           message: 'I could not extract specific information from your message. Can you please rephrase?',
-          from: null, to: null, date: null, budget: null, mode: null, groupSize: null
+          from: null, to: null, date: null, budget: null, mode: null, groupSize: null,
+          returnTrip: null, returnDate: null
         };
     }
 
@@ -133,7 +141,8 @@ Return only JSON as per this schema with no markdown or extra text. If a field i
       return {
         intent: 'error',
         message: 'NLP service returned malformed JSON. Please try again.',
-        from: null, to: null, date: null, budget: null, mode: null, groupSize: null
+        from: null, to: null, date: null, budget: null, mode: null, groupSize: null,
+        returnTrip: null, returnDate: null
       };
     }
 
@@ -152,7 +161,7 @@ Return only JSON as per this schema with no markdown or extra text. If a field i
     parsedData.budget = parsedData.budget === undefined ? null : parsedData.budget;
     parsedData.mode = parsedData.mode === undefined ? null : parsedData.mode;
     parsedData.groupSize = parsedData.groupSize === undefined ? null : parsedData.groupSize;
-    parsedData.message = parsedData.message === undefined ? null : parsedData.message; // Ensure message is null if undefined
+    parsedData.message = parsedData.message === undefined ? undefined : parsedData.message; // Ensure message is undefined if not set
 
     // Defensive check: ensure intent is always valid or defaults to 'unknown'
     const validIntents = ["book_trip", "display_trip", "cancel_trip", "greet", "error", "unknown"];
@@ -161,6 +170,10 @@ Return only JSON as per this schema with no markdown or extra text. If a field i
         parsedData.intent = 'unknown';
         parsedData.message = parsedData.message || 'I could not determine your intent. Can you please rephrase?';
     }
+    
+    // Ensure returnTrip and returnDate are explicitly null if they are undefined
+    parsedData.returnTrip = parsedData.returnTrip === undefined ? null : parsedData.returnTrip;
+    parsedData.returnDate = parsedData.returnDate === undefined ? null : parsedData.returnDate;
 
 
     console.log('✅ NLP parse successful:', parsedData);
@@ -171,7 +184,8 @@ Return only JSON as per this schema with no markdown or extra text. If a field i
     return {
       intent: 'error',
       message: error.message || 'An unexpected error occurred during NLP parsing.',
-      from: null, to: null, date: null, budget: null, mode: null, groupSize: null
+      from: null, to: null, date: null, budget: null, mode: null, groupSize: null,
+      returnTrip: null, returnDate: null
     };
   }
 }

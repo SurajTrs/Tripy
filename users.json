@@ -1,0 +1,74 @@
+[
+  {
+    "firstName": "Suraj",
+    "lastName": "Rawat",
+    "email": "Suraj.schs99@gmail.com",
+    "phone": "9555219911",
+    "password": "$2b$12$fjwZexstSYWVE9LTW2HyrOZh9JEmDttAWJF901wqB7TJ/hhGo8i9K",
+    "id": "user_1754681551322_h0qpfr",
+    "createdAt": "2025-08-08T19:32:31.323Z"
+  },
+  {
+    "firstName": "Suraj",
+    "lastName": "Rawat",
+    "email": "20bec051@iiitdwd.ac.in",
+    "phone": "9555219911",
+    "password": "$2b$12$Otq2yFmxHDTYYgKfRJCPz.cTJiySM5szlwfh2PLvxh9X2j8X3ICEe",
+    "id": "user_1754684811662_s96diz",
+    "createdAt": "2025-08-08T20:26:51.662Z"
+  },
+  {
+    "firstName": "Suraj",
+    "lastName": "Rawat",
+    "email": "suraj@gmail.com",
+    "phone": "9555219911",
+    "password": "$2b$12$BbAYAVsV.rt99R1oCEm78uF4asFoPAmMetq1naleJkhWHGU6ZL96.",
+    "id": "user_1754750543218_f5navg",
+    "createdAt": "2025-08-09T14:42:23.218Z"
+  },
+  {
+    "firstName": "Test",
+    "lastName": "User",
+    "email": "test@example.com",
+    "phone": "1234567890",
+    "password": "$2b$12$6J1XYwvOsC21V4Tv6Tv6U.q8LMnXofoSYSVBg4PrWsJJTc8/HGbdq",
+    "id": "user_1754751362858_euutqs",
+    "createdAt": "2025-08-09T14:56:02.858Z"
+  },
+  {
+    "firstName": "suraj",
+    "lastName": "rawt",
+    "email": "surajrawat99kvs@gmail.com",
+    "phone": "9555219911",
+    "password": "$2b$12$cQ2QIKC7Yl92vmcrvP6UqO.d75S5FR.6VP.pxxnKmCQWZFy/VLzBW",
+    "id": "user_1754920873924_q19qph",
+    "createdAt": "2025-08-11T14:01:13.924Z"
+  },
+  {
+    "firstName": "suraj",
+    "lastName": "rawat",
+    "email": "surajrawaatt@gmail.com",
+    "phone": "9555219911",
+    "password": "$2b$12$iGlfNsgsO.4nU39KMxko1e5n/iXY.0YVamYMWVMYmaEySY2W8ND7i",
+    "id": "user_1754922580585_ti25z9",
+    "createdAt": "2025-08-11T14:29:40.585Z"
+  },
+  {
+    "firstName": "suraj",
+    "lastName": "rawat",
+    "email": "suri@gmail.com",
+    "phone": "9555219911",
+    "password": "$2b$12$4O/UTWj6hyajqF6k9BscI.sbz30HPjxZYjMqt0QD7o0xMmOsxsABy",
+    "id": "user_1754922623286_hpwaf5",
+    "createdAt": "2025-08-11T14:30:23.286Z"
+  },
+  {
+    "firstName": "Suraj",
+    "lastName": "Rawat",
+    "email": "s111@gmail.com",
+    "phone": "9555219911",
+    "password": "$2b$12$0YNslJbhGW0pmpXy5E75F.zN1VRQzvgTQpEfdXI09TXkHyhSkiuvm",
+    "id": "user_1755012129594_oss1dr",
+    "createdAt": "2025-08-12T15:22:09.594Z"
+  }
+]

@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}"
+self.__REACT_LOADABLE_MANIFEST="{\"components/Globesec.tsx -> react-globe.gl\":{\"id\":\"components/Globesec.tsx -> react-globe.gl\",\"files\":[\"static/chunks/_app-pages-browser_node_modules_react-globe_gl_dist_react-globe_gl_mjs.js\"]}}"

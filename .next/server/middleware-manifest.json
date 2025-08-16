@@ -1,6 +1,44 @@
 {
   "version": 3,
-  "middleware": {},
+  "middleware": {
+    "/": {
+      "files": [
+        "server/edge-runtime-webpack.js",
+        "server/middleware.js"
+      ],
+      "name": "middleware",
+      "page": "/",
+      "matchers": [
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/dashboard(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\.json)?[\\/#\\?]?$",
+          "originalSource": "/dashboard/:path*"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/api\\/bookings(?:\\/((?:[^\\/#\\?]+?)(?:\\/(?:[^\\/#\\?]+?))*))?(\\.json)?[\\/#\\?]?$",
+          "originalSource": "/api/bookings/:path*"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/login(\\.json)?[\\/#\\?]?$",
+          "originalSource": "/login"
+        },
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?\\/signup(\\.json)?[\\/#\\?]?$",
+          "originalSource": "/signup"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "ig3BtwZodQQUAFW1tDRi6",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "XRTazZAczTBcEbXS32H7QYMidAakQYunCJ5ez1C5ilQ=",
+        "__NEXT_PREVIEW_MODE_ID": "56385073737ca43b8c5162e2d2d3bc82",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "0aaa23b4f482c195d3525380bb858ace9bef97f8a9c8c54f7667194283941eff",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "dfc8d9e3b5872f76b46d5e852797b822f07c3c8ef5fb3c5c35db093cb110501b"
+      }
+    }
+  },
   "functions": {},
-  "sortedMiddleware": []
+  "sortedMiddleware": [
+    "/"
+  ]
 }

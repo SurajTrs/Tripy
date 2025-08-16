@@ -1,6 +1,6 @@
 // lib/memoryStore.ts
 
-import { TripPlanData } from '@/app/api/trip/route';
+import { TripPlanData } from '../types';
 
 let lastPlannedTrip: TripPlanData | null = null;
 

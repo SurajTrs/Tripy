@@ -1,18 +1,23 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import VoiceAssistant from '../components/VoiceAssistant';
 import HeroSection from '../components/HeroSection';
 import FeaturesSection from '../components/FeaturesSection';
 import ServicesSection from '../components/ServicesSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import Footer from '../components/Footer';
-import Header from '@/components/Header';
+import Header from '../components/Header';
 
 export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [isAssistantActive, setIsAssistantActive] = useState(false);
+
+  useEffect(() => {
+    console.log('Home page loaded');
+    // We've removed the authStore initialization to fix the client-side error
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-900 via-purple-900 to-indigo-900">
